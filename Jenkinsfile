@@ -2,51 +2,59 @@ pipeline {
     agent any
 
     stages {
-
-        stage('Checkout') {
+        stage('Checkout Source') {
             steps {
-                echo 'Downloading source code...'
-                sleep 15
+                echo 'Retrieving source code from GitHub'
                 checkout scm
             }
         }
 
-        stage('Clean') {
+        stage('Clean Workspace') {
             steps {
-                echo 'Cleaning workspace...'
-                sleep 15
                 sh 'rm -f *.class *.jar || true'
             }
         }
 
-        stage('Compile') {
+        stage('Compile Application') {
             steps {
-                echo 'Compiling Calculator.java...'
-                sleep 20
                 sh 'javac Calculator.java'
             }
         }
 
-        stage('Package') {
+        stage('Package Application') {
             steps {
-                echo 'Building JAR file...'
-                sleep 20
                 sh 'jar cf CalculatorBuild.jar *.class'
             }
         }
 
-        stage('Test') {
+        stage('Run Tests') {
             steps {
-                echo 'Running tests...'
-                sleep 15
+                echo 'Executing tests'
+                sleep 5
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                echo 'Scanning application'
+                sleep 5
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying application...'
-                sleep 15
+                echo 'Deploying build'
+                sleep 5
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully'
+        }
+        failure {
+            echo 'Pipeline failed'
         }
     }
 }
