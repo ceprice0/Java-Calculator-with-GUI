@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     stages {
+
         stage('Checkout Source') {
             steps {
                 echo 'Retrieving source code from GitHub'
@@ -41,6 +42,18 @@ pipeline {
             }
         }
 
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t java-calculator .'
+            }
+        }
+
+        stage('Archive Artifact') {
+            steps {
+                archiveArtifacts artifacts: '*.jar'
+            }
+        }
+
         stage('Deploy') {
             steps {
                 echo 'Deploying build'
@@ -53,6 +66,7 @@ pipeline {
         success {
             echo 'Pipeline completed successfully'
         }
+
         failure {
             echo 'Pipeline failed'
         }
