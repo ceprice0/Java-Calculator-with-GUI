@@ -42,12 +42,6 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
-            steps {
-                sh 'docker build -t java-calculator .'
-            }
-        }
-
         stage('Archive Artifact') {
             steps {
                 archiveArtifacts artifacts: '*.jar'
@@ -66,7 +60,6 @@ pipeline {
         success {
             echo 'Pipeline completed successfully'
         }
-
         failure {
             echo 'Pipeline failed'
         }
