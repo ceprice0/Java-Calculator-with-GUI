@@ -8,15 +8,33 @@ pipeline {
             }
         }
 
-        stage('Compile Java') {
+        stage('Clean') {
+            steps {
+                sh 'rm -f *.class'
+            }
+        }
+
+        stage('Compile') {
             steps {
                 sh 'javac Calculator.java'
             }
         }
 
-        stage('List Files') {
+        stage('Verify') {
             steps {
                 sh 'ls -la'
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh 'jar cf CalculatorBuild.jar *.class'
+            }
+        }
+
+        stage('Archive') {
+            steps {
+                archiveArtifacts artifacts: '*.jar'
             }
         }
     }
