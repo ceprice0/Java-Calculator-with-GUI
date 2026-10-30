@@ -2,11 +2,20 @@ pipeline {
     agent any
 
     stages {
-        stage('Build Info') {
+        stage('Checkout') {
             steps {
-                sh 'echo CI/CD Pipeline Running'
-                sh 'date'
-                sh 'pwd'
+                checkout scm
+            }
+        }
+
+        stage('Compile Java') {
+            steps {
+                sh 'javac Calculator.java'
+            }
+        }
+
+        stage('List Files') {
+            steps {
                 sh 'ls -la'
             }
         }
