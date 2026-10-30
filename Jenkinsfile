@@ -2,9 +2,12 @@ pipeline {
     agent any
 
     stages {
-        stage('Build') {
+        stage('Build Info') {
             steps {
-                sh 'echo Jenkins connected to GitHub successfully'
+                sh 'echo CI/CD Pipeline Running'
+                sh 'date'
+                sh 'pwd'
+                sh 'ls -la'
             }
         }
     }
