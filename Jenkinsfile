@@ -6,40 +6,46 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo 'Downloading source code...'
-                sleep 5
+                sleep 15
                 checkout scm
             }
         }
 
         stage('Clean') {
             steps {
-                echo 'Cleaning old build files...'
-                sleep 5
+                echo 'Cleaning workspace...'
+                sleep 15
                 sh 'rm -f *.class *.jar || true'
             }
         }
 
         stage('Compile') {
             steps {
-                echo 'Compiling Java application...'
-                sleep 10
+                echo 'Compiling Calculator.java...'
+                sleep 20
                 sh 'javac Calculator.java'
             }
         }
 
         stage('Package') {
             steps {
-                echo 'Creating JAR file...'
-                sleep 10
+                echo 'Building JAR file...'
+                sleep 20
                 sh 'jar cf CalculatorBuild.jar *.class'
             }
         }
 
-        stage('Verify') {
+        stage('Test') {
             steps {
-                echo 'Verifying build output...'
-                sleep 5
-                sh 'ls -la'
+                echo 'Running tests...'
+                sleep 15
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying application...'
+                sleep 15
             }
         }
     }
