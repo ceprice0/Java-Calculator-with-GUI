@@ -1,4 +1,6 @@
-.env
-*.pyc
-__pycache__
-redis-data
+target
+.git
+*.md
+*.docx
+*.py
+img
