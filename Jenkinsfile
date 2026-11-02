@@ -1,8 +1,22 @@
 pipeline {
     agent any
 
-    stages {
+    tools {
+        maven 'Maven-3.9'
+        jdk 'JDK-17'
+    }
 
+    environment {
+        IMAGE_NAME = 'calculator'
+        IMAGE_TAG  = "${env.BUILD_NUMBER}"
+    }
+
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
         stage('Checkout Source') {
             steps {
                 echo 'Retrieving source code from GitHub'
@@ -10,58 +24,50 @@ pipeline {
             }
         }
 
-        stage('Clean Workspace') {
+        stage('Build') {
             steps {
-                sh 'rm -f *.class *.jar || true'
+                sh 'mvn -B clean compile'
             }
         }
 
-        stage('Compile Application') {
+        stage('Unit Tests') {
             steps {
-                sh 'javac Calculator.java'
+                sh 'mvn -B test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
             }
         }
 
-        stage('Package Application') {
+        stage('Package') {
             steps {
-                sh 'jar cf CalculatorBuild.jar *.class'
+                sh 'mvn -B -DskipTests package'
+                archiveArtifacts artifacts: 'target/calculator.jar', fingerprint: true
             }
         }
 
-        stage('Run Tests') {
+        stage('Docker Build') {
             steps {
-                echo 'Executing tests'
-                sleep 5
+                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest .'
             }
         }
 
-        stage('Security Scan') {
+        stage('Deploy (headless run)') {
             steps {
-                echo 'Scanning application'
-                sleep 5
-            }
-        }
-
-        stage('Archive Artifact') {
-            steps {
-                archiveArtifacts artifacts: '*.jar'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo 'Deploying build'
-                sleep 5
+                echo 'Running the packaged calculator in headless mode as a smoke test'
+                sh 'docker run --rm $IMAGE_NAME:$IMAGE_TAG 6 / 3'
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline completed successfully'
+            echo "Build ${env.BUILD_NUMBER} completed successfully"
         }
         failure {
-            echo 'Pipeline failed'
+            echo "Build ${env.BUILD_NUMBER} failed - check the test reports"
         }
     }
 }
