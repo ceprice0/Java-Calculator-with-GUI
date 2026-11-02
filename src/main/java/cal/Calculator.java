@@ -14,6 +14,8 @@ public class Calculator extends JFrame implements ActionListener{
 	private JPanel panel;
 	private JTextField text;
 
+	private final CalculatorEngine engine = new CalculatorEngine();
+
 	private double number, result = 0, current, temp = 0;
 	private char operator = ' ';
 	private int x = 0;
@@ -117,23 +119,13 @@ public class Calculator extends JFrame implements ActionListener{
 		this.setLocationRelativeTo(null);
 	}
 
-	private void operation(char opt, double curr){		
-			switch(operator){
-				case '+':
-					result = number + curr;
-					break;
-
-				case '-':
-					result = number - curr;
-					break;
-
-				case '*':
-					result = number * curr;
-					break;
-
-				case '/':
-					result = number / curr;
-					break;
+	private void operation(char opt, double curr){
+			try {
+				result = engine.apply(operator, number, curr);
+			} catch (ArithmeticException ex) {
+				text.setText("Error");
+				number = 0; temp = 0; result = 0; operator = ' '; x = 0;
+				return;
 			}
 
 			text.setText(String.valueOf(result));
@@ -163,7 +155,7 @@ public class Calculator extends JFrame implements ActionListener{
 				}
 				else{
 					number = temp;				
-					result = number + current;
+					result = engine.add(number, current);
 					text.setText(String.valueOf(result));
 					temp = result;
 					x = 1;
@@ -190,7 +182,7 @@ public class Calculator extends JFrame implements ActionListener{
 				}
 				else{
 					number = temp;				
-					result = number - current;
+					result = engine.subtract(number, current);
 					text.setText(String.valueOf(result));
 					temp = result;
 					x = 1;
@@ -216,7 +208,7 @@ public class Calculator extends JFrame implements ActionListener{
 				}
 				else{
 					number = temp;				
-					result = number * current;
+					result = engine.multiply(number, current);
 					text.setText(String.valueOf(result));
 					temp = result;
 					x = 1;
@@ -241,8 +233,14 @@ public class Calculator extends JFrame implements ActionListener{
 					x = 1;
 				}
 				else{
-					number = temp;				
-					result = number / current;
+					number = temp;
+					try {
+						result = engine.divide(number, current);
+					} catch (ArithmeticException ex) {
+						text.setText("Error");
+						number = 0; temp = 0; result = 0; operator = ' '; x = 0;
+						return;
+					}
 					text.setText(String.valueOf(result));
 					temp = result;
 					x = 1;
@@ -306,7 +304,11 @@ public class Calculator extends JFrame implements ActionListener{
 	}
 
 	public static void main(String args[]){
-		new Calculator();
+		if (args.length > 0 || GraphicsEnvironment.isHeadless()) {
+			CalculatorCli.run(args);
+		} else {
+			new Calculator();
+		}
 	}
 
 }

@@ -1,0 +1,14 @@
+# Maven build output
+target/
+
+# Local IDE files
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+
+# Report working files (not part of the application)
+DevOps_Report_TEMPLATE.docx
+fill_report.py
+make_report_template.py
