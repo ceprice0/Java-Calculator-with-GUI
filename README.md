@@ -1,77 +1,75 @@
 # Java Calculator with GUI
 
-A Java calculator application demonstrating Continuous Integration (CI) using Jenkins, Docker and GitHub.
+A Java Swing desktop calculator used as a DevOps case study. It demonstrates
+the full lifecycle (Plan, Code, Build, Test, Release, Deploy, Operate, Monitor)
+with Git/GitHub, Maven, JUnit, Jenkins and Docker.
 
-## Project Overview
+## What it does
 
-This project contains a Java calculator application that is automatically built using a Jenkins Pipeline running in Docker.
+A simple calculator with a Swing graphical interface for addition, subtraction,
+multiplication and division. The arithmetic lives in a separate
+`CalculatorEngine` class so it can be unit tested on its own, and the same jar
+can also run in a headless (text) mode so it works inside a Docker container.
 
-## Technologies Used
+## Tech stack
 
-- Java
-- Git
-- GitHub
-- Jenkins
-- Docker
-- CI/CD Pipeline
+- **Java 17**, **Swing** for the GUI
+- **Maven** build; **JUnit 5** tests
+- **Docker** multi-stage build
+- **Jenkins** declarative pipeline (`Jenkinsfile`)
 
-## Pipeline Workflow
-
-```text
-GitHub Repository
-        ↓
-     Jenkins
-        ↓
-Checkout Source
-        ↓
-Clean Workspace
-        ↓
-Compile Java
-        ↓
-Package Application
-        ↓
-Verify Build
-        ↓
-Archive Artifact
-        ↓
-Build SUCCESS
-```
-
-## Jenkins Pipeline Stages
-
-✅ Checkout Source
-
-✅ Clean Workspace
-
-✅ Compile Java Application
-
-✅ Package Application
-
-✅ Verify Build
-
-✅ Archive Build Artifacts
-
-## Build Process
-
-The Jenkins pipeline performs the following actions automatically:
-
-1. Pulls source code from GitHub.
-2. Checks out the latest commit.
-3. Cleans previous build files.
-4. Compiles `Calculator.java`.
-5. Creates build artifacts.
-6. Verifies generated files.
-7. Reports build status.
-
-## Build Output
-
-Successful compilation generates:
+## Project layout
 
 ```text
-Calculator.class
+src/main/java/cal/Calculator.java        Swing GUI (dispatches to CLI when headless)
+src/main/java/cal/CalculatorEngine.java  Pure arithmetic (unit tested)
+src/main/java/cal/CalculatorCli.java     Headless / command-line mode
+src/test/java/cal/CalculatorEngineTest.java  JUnit 5 tests
+pom.xml                                  Maven build
+Dockerfile                               Multi-stage build + headless runtime
+Jenkinsfile                              CI/CD pipeline
 ```
 
-and packages the application for deployment.
+## Build and test
+
+```bash
+mvn clean verify
+```
+
+This compiles the code, runs the JUnit tests and packages `target/calculator.jar`.
+
+## Run it
+
+Graphical mode (on a desktop with a display):
+
+```bash
+java -jar target/calculator.jar
+```
+
+Headless / command-line mode (one calculation, then exit):
+
+```bash
+java -jar target/calculator.jar 6 / 3      # prints 6.0 / 3.0 = 2.0
+```
+
+## Run in Docker
+
+The GUI cannot draw inside a container, so the image runs the calculator in its
+headless mode.
+
+```bash
+docker build -t calculator .
+docker run --rm calculator            # runs a short demo
+docker run --rm calculator 6 / 3      # does one calculation
+```
+
+## CI pipeline (Jenkins)
+
+The `Jenkinsfile` defines these stages: Checkout -> Build -> Unit Tests ->
+Package -> Docker Build -> Deploy (headless run). Point a Jenkins job at this
+repo and configure Maven (`Maven-3.9`) and JDK (`JDK-17`) in the Jenkins global
+tools. A GitHub webhook (or a pollSCM/cron trigger) starts the build on each
+push.
 
 ## Screenshots
 
@@ -86,7 +84,3 @@ and packages the application for deployment.
 ## Author
 
 Calum Price
-
-## Latest Build Status
-
-✅ SUCCESS
