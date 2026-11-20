@@ -6,11 +6,6 @@ pipeline {
         maven 'Maven-3.9'
     }
 
-    environment {
-        IMAGE_NAME = 'calculator'
-        IMAGE_TAG  = "${BUILD_NUMBER}"
-    }
-
     options {
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '10'))
@@ -47,22 +42,6 @@ pipeline {
             steps {
                 archiveArtifacts artifacts: 'target/calculator.jar',
                                  fingerprint: true
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                sh '''
-                    docker build \
-                    -t ${IMAGE_NAME}:${IMAGE_TAG} \
-                    -t ${IMAGE_NAME}:latest .
-                '''
-            }
-        }
-
-        stage('Docker Smoke Test') {
-            steps {
-                sh 'docker run --rm ${IMAGE_NAME}:${IMAGE_TAG} 6 / 3'
             }
         }
     }
