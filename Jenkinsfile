@@ -70,5 +70,6 @@ pipeline {
         failure {
             echo "Build ${BUILD_NUMBER} failed"
         }
+        
     }
 }
