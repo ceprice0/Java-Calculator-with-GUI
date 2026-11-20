@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    tools {
+        jdk 'JDK-17'
+        maven 'Maven-3.9'
+    }
+
     environment {
         IMAGE_NAME = 'calculator'
         IMAGE_TAG  = "${BUILD_NUMBER}"
@@ -70,6 +75,5 @@ pipeline {
         failure {
             echo "Build ${BUILD_NUMBER} failed"
         }
-        
     }
 }
