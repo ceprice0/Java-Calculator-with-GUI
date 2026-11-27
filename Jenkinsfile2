@@ -75,7 +75,7 @@ pipeline {
 
         stage('Install Ansible on webserver2') {
             steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent(credentials: ['calumcalcaws']) {
                     sh '''
                         set -eu
 
@@ -106,7 +106,7 @@ webserver4 ansible_host=${params.WEBSERVER4_PRIVATE_IP.trim()} ansible_user=ec2-
 """
                     )
                 }
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent(credentials: ['calumcalcaws']) {
                     sh '''
                         set -eu
 
@@ -124,7 +124,7 @@ webserver4 ansible_host=${params.WEBSERVER4_PRIVATE_IP.trim()} ansible_user=ec2-
 
         stage('Deploy to webserver3 and webserver4') {
             steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent(credentials: ['calumcalcaws']) {
                     sh '''
                         set -eu
 

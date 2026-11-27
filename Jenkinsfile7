@@ -30,7 +30,7 @@ pipeline {
         stage('Deploy existing image to webserver2') {
             steps {
                 echo 'Deploying the existing headless calculator image to webserver2'
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent(credentials: ['calumcalcaws']) {
                     sh '''
                         set -eu
 
