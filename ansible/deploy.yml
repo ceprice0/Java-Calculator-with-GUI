@@ -65,7 +65,9 @@
           - ps
           - --filter
           - "name={{ container_name }}"
+      register: running_container
       changed_when: false
+      failed_when: container_name not in running_container.stdout
 
     - name: Show calculator startup logs
       ansible.builtin.command:
