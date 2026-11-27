@@ -79,7 +79,7 @@ pipeline {
                     sh '''
                         set -eu
 
-                        ssh -A -o BatchMode=yes "$EC2_USER@$EC2_HOST" 'bash -se' <<'REMOTE'
+                        ssh -A -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$EC2_USER@$EC2_HOST" 'bash -se' <<'REMOTE'
                         set -eu
 
                         if [ ! -x "$HOME/ansible-venv/bin/ansible-playbook" ]; then
@@ -101,8 +101,8 @@ REMOTE
                     writeFile(
                         file: 'ci-source/ansible/inventory.ini',
                         text: """[webservers]
-webserver3 ansible_host=${params.WEBSERVER3_PRIVATE_IP.trim()} ansible_user=ec2-user
-webserver4 ansible_host=${params.WEBSERVER4_PRIVATE_IP.trim()} ansible_user=ec2-user
+webserver3 ansible_host=${params.WEBSERVER3_PRIVATE_IP.trim()} ansible_user=ec2-user ansible_ssh_common_args="-o StrictHostKeyChecking=accept-new"
+webserver4 ansible_host=${params.WEBSERVER4_PRIVATE_IP.trim()} ansible_user=ec2-user ansible_ssh_common_args="-o StrictHostKeyChecking=accept-new"
 """
                     )
                 }
@@ -110,10 +110,10 @@ webserver4 ansible_host=${params.WEBSERVER4_PRIVATE_IP.trim()} ansible_user=ec2-
                     sh '''
                         set -eu
 
-                        ssh -o BatchMode=yes "$EC2_USER@$EC2_HOST" \
+                        ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$EC2_USER@$EC2_HOST" \
                             "mkdir -p '$REMOTE_ANSIBLE_DIR'"
 
-                        scp -o BatchMode=yes \
+                        scp -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
                             ci-source/ansible/inventory.ini \
                             ci-source/ansible/deploy.yml \
                             "$EC2_USER@$EC2_HOST:$REMOTE_ANSIBLE_DIR/"
@@ -128,7 +128,7 @@ webserver4 ansible_host=${params.WEBSERVER4_PRIVATE_IP.trim()} ansible_user=ec2-
                     sh '''
                         set -eu
 
-                        ssh -A -o BatchMode=yes "$EC2_USER@$EC2_HOST" \
+                        ssh -A -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$EC2_USER@$EC2_HOST" \
                             "IMAGE_REPO='$IMAGE_REPO' IMAGE_TAG='$IMAGE_TAG' bash -se" <<'REMOTE'
                         set -eu
 
