@@ -52,7 +52,34 @@ Headless / command-line mode (one calculation, then exit):
 java -jar target/calculator.jar 6 / 3      # prints 6.0 / 3.0 = 2.0
 ```
 
-## Run in Docker
+Interactive mode (stays open for repeated calculations):
+
+```bash
+java -jar target/calculator.jar --interactive
+```
+
+## Keep the calculator running in Docker
+
+Build the image and start an interactive container. Docker Desktop will show it
+as running while the calculator waits for input:
+
+```bash
+docker build -t calculator .
+docker run -it --name calculator-demo calculator --interactive
+```
+
+Enter calculations such as `6 / 3`; type `exit` to stop the container. To start
+it in the background and attach later:
+
+```bash
+docker run -d -it --name calculator-demo calculator --interactive
+docker attach calculator-demo
+```
+
+Use `Ctrl+P`, then `Ctrl+Q` to detach without stopping it. Stop it with
+`docker stop calculator-demo`.
+
+## Run one-off Docker commands
 
 The GUI cannot draw inside a container, so the image runs the calculator in its
 headless mode.
