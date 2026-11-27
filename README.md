@@ -64,20 +64,20 @@ Build the image and start an interactive container. Docker Desktop will show it
 as running while the calculator waits for input:
 
 ```bash
-docker build -t calculator .
-docker run -it --name calculator-demo calculator --interactive
+docker build -t java-calculator-with-gui .
+docker run -it --name java-calculator-with-gui java-calculator-with-gui --interactive
 ```
 
 Enter calculations such as `6 / 3`; type `exit` to stop the container. To start
 it in the background and attach later:
 
 ```bash
-docker run -d -it --name calculator-demo calculator --interactive
-docker attach calculator-demo
+docker run -d -it --name java-calculator-with-gui java-calculator-with-gui --interactive
+docker attach java-calculator-with-gui
 ```
 
 Use `Ctrl+P`, then `Ctrl+Q` to detach without stopping it. Stop it with
-`docker stop calculator-demo`.
+`docker stop java-calculator-with-gui`.
 
 ## Run one-off Docker commands
 
@@ -85,9 +85,9 @@ The GUI cannot draw inside a container, so the image runs the calculator in its
 headless mode.
 
 ```bash
-docker build -t calculator .
-docker run --rm calculator            # runs a short demo
-docker run --rm calculator 6 / 3      # does one calculation
+docker build -t java-calculator-with-gui .
+docker run --rm java-calculator-with-gui            # runs a short demo
+docker run --rm java-calculator-with-gui 6 / 3      # does one calculation
 ```
 
 ## CI pipeline (Jenkins)

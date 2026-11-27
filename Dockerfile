@@ -14,6 +14,8 @@ RUN mvn -B clean verify
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
+LABEL org.opencontainers.image.title="java-calculator-with-gui"
+
 COPY --from=build /workspace/target/calculator.jar calculator.jar
 
 # There is no display inside the container, so run the calculator in its
