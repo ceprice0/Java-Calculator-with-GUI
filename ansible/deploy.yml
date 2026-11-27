@@ -1,0 +1,78 @@
+---
+- name: Deploy the headless Java calculator to EC2
+  hosts: webservers
+  become: true
+
+  vars:
+    image_repo: calum1/java-calculator-with-gui
+    image_tag: latest
+    image_name: "{{ image_repo }}:{{ image_tag }}"
+    container_name: java-calculator-with-gui
+
+  tasks:
+    - name: Install Docker
+      ansible.builtin.dnf:
+        name: docker
+        state: present
+
+    - name: Start and enable Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Pull the existing calculator image
+      ansible.builtin.command:
+        argv:
+          - docker
+          - pull
+          - "{{ image_name }}"
+      changed_when: true
+
+    - name: Remove the previous calculator container if present
+      ansible.builtin.command:
+        argv:
+          - docker
+          - rm
+          - -f
+          - "{{ container_name }}"
+      register: remove_result
+      failed_when: >
+        remove_result.rc != 0 and
+        'No such container' not in remove_result.stderr
+      changed_when: remove_result.rc == 0
+
+    - name: Start the interactive calculator container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - run
+          - --detach
+          - --interactive
+          - --tty
+          - --restart
+          - unless-stopped
+          - --name
+          - "{{ container_name }}"
+          - "{{ image_name }}"
+          - --interactive
+      changed_when: true
+
+    - name: Display the running calculator container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - ps
+          - --filter
+          - "name={{ container_name }}"
+      changed_when: false
+
+    - name: Show calculator startup logs
+      ansible.builtin.command:
+        argv:
+          - docker
+          - logs
+          - --tail
+          - "5"
+          - "{{ container_name }}"
+      changed_when: false

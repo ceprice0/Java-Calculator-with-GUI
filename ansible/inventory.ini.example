@@ -1,0 +1,3 @@
+[webservers]
+webserver3 ansible_host=<WEBSERVER3_PRIVATE_IP> ansible_user=ec2-user
+webserver4 ansible_host=<WEBSERVER4_PRIVATE_IP> ansible_user=ec2-user

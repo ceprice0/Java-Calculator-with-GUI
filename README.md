@@ -28,6 +28,10 @@ src/test/java/cal/CalculatorEngineTest.java  JUnit 5 tests
 pom.xml                                  Maven build
 Dockerfile                               Multi-stage build + headless runtime
 Jenkinsfile                              CI/CD pipeline
+Jenkinsfile7                             Workshop 9 direct EC2 deployment
+Jenkinsfile2                             Workshop 9 Ansible deployment
+ansible/deploy.yml                       Ansible playbook
+ansible/inventory.ini.example            Inventory format example
 ```
 
 ## Build and test
@@ -92,11 +96,64 @@ docker run --rm java-calculator-with-gui 6 / 3      # does one calculation
 
 ## CI pipeline (Jenkins)
 
-The `Jenkinsfile` defines these stages: Checkout -> Build -> Unit Tests ->
-Package -> Docker Build -> Deploy (headless run). Point a Jenkins job at this
-repo and configure Maven (`Maven-3.9`) and JDK (`JDK-17`) in the Jenkins global
-tools. A GitHub webhook (or a pollSCM/cron trigger) starts the build on each
-push.
+The existing `Jenkinsfile` checks out the source, builds and tests it with
+Maven, and archives `target/calculator.jar`. Configure Maven (`Maven-3.9`) and
+JDK (`JDK-17`) in Jenkins global tools. A GitHub webhook (or a pollSCM/cron
+trigger) starts the build on each push.
+
+## Workshop 9: deploy the existing image to EC2
+
+`Jenkinsfile7` deploys the existing public image
+`calum1/java-calculator-with-gui:latest` directly to webserver2.
+`Jenkinsfile2` uses webserver2 as the Ansible control node to deploy the same
+image to webserver3 and webserver4. These pipelines do not build or test the
+application.
+
+This image is a headless interactive CLI calculator, not an HTTP/PHP service.
+The deployment keeps its calculator process running with an interactive TTY;
+it does not listen on port 5000 or port 80. Verify it from the Jenkins console
+or with `docker ps` and `docker logs` on the EC2 hosts rather than a browser.
+
+### Jenkins prerequisites
+
+- Install the Jenkins Git and SSH Agent plugins. The Jenkins execution agent
+  must provide `sh`, `ssh`, and `scp`.
+- Add one **SSH Username with private key** credential with username
+  `ec2-user` and ID `ec2-ssh-key` (or enter its actual ID in the job parameter).
+  Keep the private key in Jenkins; do not put it in this repository.
+- Ensure the Jenkins agent trusts webserver2's SSH host key, and webserver2
+  trusts the SSH host keys of webserver3 and webserver4. Verify host-key
+  fingerprints before adding them to `known_hosts`; these pipelines leave SSH
+  host-key checking enabled.
+- Allow SSH TCP 22 from the Jenkins agent to webserver2, and from webserver2
+  to webserver3/webserver4. The EC2 instances also need outbound HTTPS access
+  to pull the public Docker Hub image. No inbound application port is needed.
+
+### Task 1: deploy directly to webserver2
+
+Create a Pipeline job using **Pipeline script from SCM** and set **Script Path**
+to `Jenkinsfile7` (leave the existing CI job on `Jenkinsfile`). At build time,
+enter webserver2's current public IP/DNS name and the Jenkins SSH credential ID.
+The pipeline installs and starts Docker if needed, pulls the existing image,
+and replaces the `java-calculator-with-gui` container.
+
+### Task 2: deploy through Ansible on webserver2
+
+Create another Pipeline job from the same SCM repository and set **Script Path**
+to `Jenkinsfile2`. At build time, enter webserver2's current public IP/DNS name,
+the current private IPv4 addresses of webserver3 and webserver4, and the Jenkins
+SSH credential ID. The pipeline generates `ansible/inventory.ini` from those
+parameters, copies it and `ansible/deploy.yml` to webserver2, then runs the
+playbook with the forwarded Jenkins SSH agent.
+
+`ansible/inventory.ini.example` shows the inventory format. The real inventory
+is generated for each Jenkins run, so EC2 addresses are not committed. All
+three instances should use Amazon Linux 2023 and the same EC2 key pair. Refresh
+public addresses after stopping and starting an instance.
+
+To interact with a deployed calculator, SSH to its host and run
+`sudo docker attach java-calculator-with-gui`. Enter calculations such as
+`6 / 3`; use **Ctrl+P**, then **Ctrl+Q** to detach without stopping it.
 
 ## Screenshots
 

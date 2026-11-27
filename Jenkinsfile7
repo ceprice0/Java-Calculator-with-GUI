@@ -1,0 +1,91 @@
+pipeline {
+    agent any
+
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
+    parameters {
+        string(
+            name: 'EC2_HOST',
+            defaultValue: '',
+            description: 'Current public IPv4 address or DNS name of webserver2'
+        )
+        string(
+            name: 'SSH_CREDENTIAL_ID',
+            defaultValue: 'ec2-ssh-key',
+            description: 'Jenkins SSH Username with private key credential ID'
+        )
+    }
+
+    environment {
+        IMAGE_REPO = 'calum1/java-calculator-with-gui'
+        IMAGE_TAG = 'latest'
+        EC2_USER = 'ec2-user'
+        CONTAINER_NAME = 'java-calculator-with-gui'
+    }
+
+    stages {
+        stage('Validate parameters') {
+            steps {
+                script {
+                    def host = params.EC2_HOST?.trim()
+                    if (!host || !(host ==~ /[A-Za-z0-9][A-Za-z0-9.-]*/)) {
+                        error('Set EC2_HOST to the current public IPv4 address or DNS name of webserver2.')
+                    }
+                    if (!params.SSH_CREDENTIAL_ID?.trim()) {
+                        error('Set SSH_CREDENTIAL_ID to the Jenkins SSH credential ID.')
+                    }
+                }
+            }
+        }
+
+        stage('Deploy existing image to webserver2') {
+            steps {
+                echo 'Deploying the existing headless calculator image to webserver2'
+                sshagent(credentials: [params.SSH_CREDENTIAL_ID.trim()]) {
+                    sh '''
+                        set -eu
+
+                        ssh -o BatchMode=yes "$EC2_USER@$EC2_HOST" \
+                            "IMAGE_REPO='$IMAGE_REPO' IMAGE_TAG='$IMAGE_TAG' CONTAINER_NAME='$CONTAINER_NAME' bash -se" <<'REMOTE'
+                        set -eu
+
+                        if ! command -v docker >/dev/null 2>&1; then
+                            sudo dnf install -y docker
+                        fi
+                        sudo systemctl enable --now docker
+
+                        echo "Pulling $IMAGE_REPO:$IMAGE_TAG"
+                        sudo docker pull "$IMAGE_REPO:$IMAGE_TAG"
+
+                        if sudo docker container inspect "$CONTAINER_NAME" >/dev/null 2>&1; then
+                            sudo docker rm -f "$CONTAINER_NAME"
+                        fi
+
+                        echo "Starting $CONTAINER_NAME"
+                        sudo docker run --detach --interactive --tty \
+                            --restart unless-stopped \
+                            --name "$CONTAINER_NAME" \
+                            "$IMAGE_REPO:$IMAGE_TAG" --interactive
+
+                        sudo docker ps --filter "name=^/$CONTAINER_NAME$"
+                        sudo docker logs --tail 5 "$CONTAINER_NAME"
+REMOTE
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment to webserver2 completed successfully.'
+        }
+        failure {
+            echo 'Deployment failed. Check the Jenkins Console Output.'
+        }
+    }
+}

@@ -8,6 +8,9 @@ target/
 .classpath
 .project
 
+# EC2 addresses are supplied to the Jenkins deployment job at runtime
+ansible/inventory.ini
+
 # Report working files (not part of the application)
 DevOps_Report_TEMPLATE.docx
 fill_report.py
