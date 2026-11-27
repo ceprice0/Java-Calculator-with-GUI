@@ -7,22 +7,10 @@ pipeline {
         timestamps()
     }
 
-    parameters {
-        string(
-            name: 'EC2_HOST',
-            defaultValue: '',
-            description: 'Current public IPv4 address or DNS name of webserver2'
-        )
-        string(
-            name: 'SSH_CREDENTIAL_ID',
-            defaultValue: 'ec2-ssh-key',
-            description: 'Jenkins SSH Username with private key credential ID'
-        )
-    }
-
     environment {
         IMAGE_REPO = 'calum1/java-calculator-with-gui'
         IMAGE_TAG = 'latest'
+        EC2_HOST = '13.60.65.28'
         EC2_USER = 'ec2-user'
         CONTAINER_NAME = 'java-calculator-with-gui'
     }
@@ -31,12 +19,9 @@ pipeline {
         stage('Validate parameters') {
             steps {
                 script {
-                    def host = params.EC2_HOST?.trim()
+                    def host = env.EC2_HOST?.trim()
                     if (!host || !(host ==~ /[A-Za-z0-9][A-Za-z0-9.-]*/)) {
-                        error('Set EC2_HOST to the current public IPv4 address or DNS name of webserver2.')
-                    }
-                    if (!params.SSH_CREDENTIAL_ID?.trim()) {
-                        error('Set SSH_CREDENTIAL_ID to the Jenkins SSH credential ID.')
+                        error('EC2_HOST must be the current public IPv4 address or DNS name of webserver2.')
                     }
                 }
             }
@@ -45,7 +30,7 @@ pipeline {
         stage('Deploy existing image to webserver2') {
             steps {
                 echo 'Deploying the existing headless calculator image to webserver2'
-                sshagent(credentials: [params.SSH_CREDENTIAL_ID.trim()]) {
+                sshagent(credentials: ['ec2-ssh-key']) {
                     sh '''
                         set -eu
 

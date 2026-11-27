@@ -9,11 +9,6 @@ pipeline {
 
     parameters {
         string(
-            name: 'CONTROL_HOST',
-            defaultValue: '',
-            description: 'Current public IPv4 address or DNS name of webserver2'
-        )
-        string(
             name: 'WEBSERVER3_PRIVATE_IP',
             defaultValue: '',
             description: 'Current private IPv4 address of webserver3'
@@ -23,16 +18,12 @@ pipeline {
             defaultValue: '',
             description: 'Current private IPv4 address of webserver4'
         )
-        string(
-            name: 'SSH_CREDENTIAL_ID',
-            defaultValue: 'ec2-ssh-key',
-            description: 'Jenkins SSH Username with private key credential ID'
-        )
     }
 
     environment {
         IMAGE_REPO = 'calum1/java-calculator-with-gui'
         IMAGE_TAG = 'latest'
+        EC2_HOST = '13.60.65.28'
         EC2_USER = 'ec2-user'
         CONTAINER_NAME = 'java-calculator-with-gui'
         REMOTE_ANSIBLE_DIR = '/home/ec2-user/java-calculator-with-gui/ansible'
@@ -42,9 +33,9 @@ pipeline {
         stage('Validate parameters') {
             steps {
                 script {
-                    def controlHost = params.CONTROL_HOST?.trim()
+                    def controlHost = env.EC2_HOST?.trim()
                     if (!controlHost || !(controlHost ==~ /[A-Za-z0-9][A-Za-z0-9.-]*/)) {
-                        error('Set CONTROL_HOST to the current public IPv4 address or DNS name of webserver2.')
+                        error('EC2_HOST must be the current public IPv4 address or DNS name of webserver2.')
                     }
 
                     def isPrivateIpv4 = { String address ->
@@ -70,9 +61,6 @@ pipeline {
                     if (params.WEBSERVER3_PRIVATE_IP.trim() == params.WEBSERVER4_PRIVATE_IP.trim()) {
                         error('webserver3 and webserver4 must have different private IP addresses.')
                     }
-                    if (!params.SSH_CREDENTIAL_ID?.trim()) {
-                        error('Set SSH_CREDENTIAL_ID to the Jenkins SSH credential ID.')
-                    }
                 }
             }
         }
@@ -87,11 +75,11 @@ pipeline {
 
         stage('Install Ansible on webserver2') {
             steps {
-                sshagent(credentials: [params.SSH_CREDENTIAL_ID.trim()]) {
+                sshagent(credentials: ['ec2-ssh-key']) {
                     sh '''
                         set -eu
 
-                        ssh -A -o BatchMode=yes "$EC2_USER@$CONTROL_HOST" 'bash -se' <<'REMOTE'
+                        ssh -A -o BatchMode=yes "$EC2_USER@$EC2_HOST" 'bash -se' <<'REMOTE'
                         set -eu
 
                         if [ ! -x "$HOME/ansible-venv/bin/ansible-playbook" ]; then
@@ -118,17 +106,17 @@ webserver4 ansible_host=${params.WEBSERVER4_PRIVATE_IP.trim()} ansible_user=ec2-
 """
                     )
                 }
-                sshagent(credentials: [params.SSH_CREDENTIAL_ID.trim()]) {
+                sshagent(credentials: ['ec2-ssh-key']) {
                     sh '''
                         set -eu
 
-                        ssh -o BatchMode=yes "$EC2_USER@$CONTROL_HOST" \
+                        ssh -o BatchMode=yes "$EC2_USER@$EC2_HOST" \
                             "mkdir -p '$REMOTE_ANSIBLE_DIR'"
 
                         scp -o BatchMode=yes \
                             ci-source/ansible/inventory.ini \
                             ci-source/ansible/deploy.yml \
-                            "$EC2_USER@$CONTROL_HOST:$REMOTE_ANSIBLE_DIR/"
+                            "$EC2_USER@$EC2_HOST:$REMOTE_ANSIBLE_DIR/"
                     '''
                 }
             }
@@ -136,11 +124,11 @@ webserver4 ansible_host=${params.WEBSERVER4_PRIVATE_IP.trim()} ansible_user=ec2-
 
         stage('Deploy to webserver3 and webserver4') {
             steps {
-                sshagent(credentials: [params.SSH_CREDENTIAL_ID.trim()]) {
+                sshagent(credentials: ['ec2-ssh-key']) {
                     sh '''
                         set -eu
 
-                        ssh -A -o BatchMode=yes "$EC2_USER@$CONTROL_HOST" \
+                        ssh -A -o BatchMode=yes "$EC2_USER@$EC2_HOST" \
                             "IMAGE_REPO='$IMAGE_REPO' IMAGE_TAG='$IMAGE_TAG' bash -se" <<'REMOTE'
                         set -eu
 
